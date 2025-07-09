@@ -1,6 +1,6 @@
 package com.example.layeredarchitecture.controller;
 
-import com.example.layeredarchitecture.dao.ItemDAO;
+import com.example.layeredarchitecture.dao.ItemDAOImpl;
 import com.example.layeredarchitecture.db.DBConnection;
 import com.example.layeredarchitecture.model.ItemDTO;
 import com.example.layeredarchitecture.view.tdm.ItemTM;
@@ -71,18 +71,10 @@ public class ManageItemsFormController {
         tblItems.getItems().clear();
         try {
             /*Get all items*/
-
-            ItemDAO itemDAO = new ItemDAO();
-            ArrayList<ItemDTO> items = itemDAO.loadAllItems();
-            for (ItemDTO itemDTO:items){
-                tblItems.getItems().add(
-                        new ItemTM(
-                                itemDTO.getCode(),
-                                itemDTO.getDescription(),
-                                itemDTO.getUnitPrice(),
-                                itemDTO.getQtyOnHand()
-                        )
-                );
+            ItemDAOImpl itemDAO=new ItemDAOImpl();
+            ArrayList<ItemDTO> allItems=itemDAO.getAllItems();
+            for(ItemDTO itemDTO:allItems){
+                tblItems.getItems().add(new ItemTM(itemDTO.getCode(),itemDTO.getDescription(),itemDTO.getUnitPrice(),itemDTO.getQtyOnHand()));
             }
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
@@ -139,7 +131,7 @@ public class ManageItemsFormController {
             if (!existItem(code)) {
                 new Alert(Alert.AlertType.ERROR, "There is no such item associated with the id " + code).show();
             }
-            ItemDAO itemDAO = new ItemDAO();
+            ItemDAOImpl itemDAO=new ItemDAOImpl();
             itemDAO.deleteItem(code);
 
             tblItems.getItems().remove(tblItems.getSelectionModel().getSelectedItem());
@@ -180,8 +172,8 @@ public class ManageItemsFormController {
                     new Alert(Alert.AlertType.ERROR, code + " already exists").show();
                 }
                 //Save Item
-                ItemDAO itemDAO=new ItemDAO();
-                itemDAO.saveItems(new ItemDTO(code,description,unitPrice,qtyOnHand));
+                ItemDAOImpl itemDAO=new ItemDAOImpl();
+                itemDAO.saveItem(new ItemDTO(code, description, unitPrice, qtyOnHand));
                 tblItems.getItems().add(new ItemTM(code, description, unitPrice, qtyOnHand));
 
             } catch (SQLException e) {
@@ -196,8 +188,8 @@ public class ManageItemsFormController {
                     new Alert(Alert.AlertType.ERROR, "There is no such item associated with the id " + code).show();
                 }
                 /*Update Item*/
-                ItemDAO itemDAO = new ItemDAO();
-                itemDAO.updateItem(new ItemDTO(code,description,unitPrice,qtyOnHand));
+                ItemDAOImpl itemDAO=new ItemDAOImpl();
+                itemDAO.updateItem(new ItemDTO(code, description, unitPrice, qtyOnHand));
 
                 ItemTM selectedItem = tblItems.getSelectionModel().getSelectedItem();
                 selectedItem.setDescription(description);
@@ -216,19 +208,20 @@ public class ManageItemsFormController {
 
 
     private boolean existItem(String code) throws SQLException, ClassNotFoundException {
-        ItemDAO itemDAO = new ItemDAO();
+//        Connection connection = DBConnection.getDbConnection().getConnection();
+//        PreparedStatement pstm = connection.prepareStatement("SELECT code FROM Item WHERE code=?");
+        ItemDAOImpl itemDAO=new ItemDAOImpl();
         return itemDAO.existItem(code);
+
     }
 
 
     private String generateNewId() {
         try {
-            ItemDAO itemDAO =new ItemDAO();
-            return itemDAO.newId();
-        } catch (SQLException e) {
+          ItemDAOImpl itemDAO=new ItemDAOImpl();
+          return itemDAO.generateNewItemCode();
+        } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
         return "I00-001";
     }
